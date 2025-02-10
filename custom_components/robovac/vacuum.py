@@ -400,87 +400,87 @@ class RoboVacEntity(StateVacuumEntity):
         self.async_write_ha_state()
 
     def update_entity_values(self):
-    self.tuyastatus = self.vacuum._dps
-    _LOGGER.debug("tuyastatus %s", self.tuyastatus)
+        self.tuyastatus = self.vacuum._dps
+        _LOGGER.debug("tuyastatus %s", self.tuyastatus)
 
-    self._attr_battery_level = self.tuyastatus.get(
-        self._tuya_command_codes[RobovacCommand.BATTERY]
-    )
-    _LOGGER.debug("_attr_battery_level %s", self._attr_battery_level)
-
-    self.tuya_state = STATUS_MAPPING.get(
-        TUYA_STATUS_MAPPING.get(
-            self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.STATUS]
-            ), None
-        ), None
-    )
-    _LOGGER.debug("tuya_state %s", self.tuya_state)
-
-    self.error_code = ERROR_MAPPING.get(
-        self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.ERROR]
-        ), None
-    )
-    _LOGGER.debug("error_code %s", self.error_code)
-
-    self._attr_mode = self.tuyastatus.get(
-        self._tuya_command_codes[RobovacCommand.MODE]
-    )
-    _LOGGER.debug("_attr_mode %s", self._attr_mode)
-
-    self._attr_fan_speed = friendly_text(
-        self.tuyastatus.get(self._tuya_command_codes[RobovacCommand.FAN_SPEED], "")
-    )
-    _LOGGER.debug("_attr_fan_speed %s", self._attr_fan_speed)
-
-    if RobovacCommand.CLEANING_AREA in self._tuya_command_codes:
-        self._attr_cleaning_area = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.CLEANING_AREA]
+        self._attr_battery_level = self.tuyastatus.get(
+            self._tuya_command_codes[RobovacCommand.BATTERY]
         )
-        _LOGGER.debug("_attr_cleaning_area %s", self._attr_cleaning_area)
+        _LOGGER.debug("_attr_battery_level %s", self._attr_battery_level)
 
-    if RobovacCommand.CLEANING_TIME in self._tuya_command_codes:
-        self._attr_cleaning_time = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.CLEANING_TIME]
-        )
-        _LOGGER.debug("_attr_cleaning_time %s", self._attr_cleaning_time)
-
-    if RobovacCommand.AUTO_RETURN in self._tuya_command_codes:
-        self._attr_auto_return = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.AUTO_RETURN]
-        )
-        _LOGGER.debug("_attr_auto_return %s", self._attr_auto_return)
-
-    if RobovacCommand.DO_NOT_DISTURB in self._tuya_command_codes:
-        self._attr_do_not_disturb = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.DO_NOT_DISTURB]
-        )
-        _LOGGER.debug("_attr_do_not_disturb %s", self._attr_do_not_disturb)
-
-    if RobovacCommand.BOOST_IQ in self._tuya_command_codes:
-        self._attr_boost_iq = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.BOOST_IQ]
-        )
-        _LOGGER.debug("_attr_boost_iq %s", self._attr_boost_iq)
-
-    if RobovacCommand.CONSUMABLES in self._tuya_command_codes:
-        consumables = ast.literal_eval(
-            base64.b64decode(
+        self.tuya_state = STATUS_MAPPING.get(
+            TUYA_STATUS_MAPPING.get(
                 self.tuyastatus.get(
-                    self._tuya_command_codes[RobovacCommand.CONSUMABLES]
-                )
-            ).decode("ascii")
+                    self._tuya_command_codes[RobovacCommand.STATUS]
+                ), None
+            ), None
         )
-        _LOGGER.debug("Consumables decoded value is: {}".format(consumables))
-        if "consumable" in consumables and "duration" in consumables["consumable"]:
-            _LOGGER.debug(
-                "Consumables encoded value is: {}".format(
-                    consumables["consumable"]["duration"]
-                )
+        _LOGGER.debug("tuya_state %s", self.tuya_state)
+
+        self.error_code = ERROR_MAPPING.get(
+            self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.ERROR]
+            ), None
+        )
+        _LOGGER.debug("error_code %s", self.error_code)
+
+        self._attr_mode = self.tuyastatus.get(
+            self._tuya_command_codes[RobovacCommand.MODE]
+        )
+        _LOGGER.debug("_attr_mode %s", self._attr_mode)
+
+        self._attr_fan_speed = friendly_text(
+            self.tuyastatus.get(self._tuya_command_codes[RobovacCommand.FAN_SPEED], "")
+        )
+        _LOGGER.debug("_attr_fan_speed %s", self._attr_fan_speed)
+
+        if RobovacCommand.CLEANING_AREA in self._tuya_command_codes:
+            self._attr_cleaning_area = self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.CLEANING_AREA]
             )
-            self._attr_consumables = consumables["consumable"]["duration"]
-        _LOGGER.debug("_attr_consumables %s", self._attr_consumables)
+            _LOGGER.debug("_attr_cleaning_area %s", self._attr_cleaning_area)
+
+        if RobovacCommand.CLEANING_TIME in self._tuya_command_codes:
+            self._attr_cleaning_time = self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.CLEANING_TIME]
+            )
+            _LOGGER.debug("_attr_cleaning_time %s", self._attr_cleaning_time)
+
+        if RobovacCommand.AUTO_RETURN in self._tuya_command_codes:
+            self._attr_auto_return = self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.AUTO_RETURN]
+            )
+            _LOGGER.debug("_attr_auto_return %s", self._attr_auto_return)
+
+        if RobovacCommand.DO_NOT_DISTURB in self._tuya_command_codes:
+            self._attr_do_not_disturb = self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.DO_NOT_DISTURB]
+            )
+            _LOGGER.debug("_attr_do_not_disturb %s", self._attr_do_not_disturb)
+
+        if RobovacCommand.BOOST_IQ in self._tuya_command_codes:
+            self._attr_boost_iq = self.tuyastatus.get(
+                self._tuya_command_codes[RobovacCommand.BOOST_IQ]
+            )
+            _LOGGER.debug("_attr_boost_iq %s", self._attr_boost_iq)
+
+        if RobovacCommand.CONSUMABLES in self._tuya_command_codes:
+            consumables = ast.literal_eval(
+                base64.b64decode(
+                    self.tuyastatus.get(
+                        self._tuya_command_codes[RobovacCommand.CONSUMABLES]
+                    )
+                ).decode("ascii")
+            )
+            _LOGGER.debug("Consumables decoded value is: {}".format(consumables))
+            if "consumable" in consumables and "duration" in consumables["consumable"]:
+                _LOGGER.debug(
+                    "Consumables encoded value is: {}".format(
+                        consumables["consumable"]["duration"]
+                    )
+                )
+                self._attr_consumables = consumables["consumable"]["duration"]
+            _LOGGER.debug("_attr_consumables %s", self._attr_consumables)
 
 
     async def async_locate(self, **kwargs):
