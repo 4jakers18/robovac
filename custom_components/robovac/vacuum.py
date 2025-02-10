@@ -444,87 +444,94 @@ class RoboVacEntity(StateVacuumEntity):
         self.async_write_ha_state()
 
     def update_entity_values(self):
+        # Get the full DPS (data points) from the vacuum
         self.tuyastatus = self.vacuum._dps
-        _LOGGER.debug("tuyastatus %s", self.tuyastatus)
+        _LOGGER.debug("Received Tuya DPS: %s", self.tuyastatus)
 
-        self._attr_battery_level = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.BATTERY]
-        )
-        _LOGGER.debug("_attr_battery_level %s", self._attr_battery_level)
+        # Battery level
+        battery_code = self._tuya_command_codes.get(RobovacCommand.BATTERY)
+        self._attr_battery_level = self.tuyastatus.get(battery_code)
+        _LOGGER.debug("Battery level (code %s): %s", battery_code, self._attr_battery_level)
 
-        raw_status = self.tuyastatus.get(self._tuya_command_codes[RobovacCommand.STATUS])
+        # Status handling
+        status_code = self._tuya_command_codes.get(RobovacCommand.STATUS)
+        raw_status = self.tuyastatus.get(status_code)
+        _LOGGER.debug("Raw status (code %s): %s", status_code, raw_status)
+
         mapped_status = TUYA_STATUS_MAPPING.get(raw_status)
         if mapped_status is None:
-            # Fallback: use the raw status (converted to uppercase, if desired)
-            mapped_status = raw_status.upper() if raw_status else None
-        self.tuya_state = STATUS_MAPPING.get(mapped_status, mapped_status)
+            if raw_status:
+                mapped_status = raw_status.upper()
+                _LOGGER.debug("No mapping for raw status '%s'; fallback to uppercase: %s", raw_status, mapped_status)
+            else:
+                mapped_status = None
+                _LOGGER.debug("Raw status is empty or None.")
+        else:
+            _LOGGER.debug("Mapped status from TUYA_STATUS_MAPPING: %s", mapped_status)
 
-        _LOGGER.debug("tuya_state %s", self.tuya_state)
+        final_status = STATUS_MAPPING.get(mapped_status, mapped_status)
+        self.tuya_state = final_status
+        _LOGGER.debug("Final tuya_state after STATUS_MAPPING: %s", self.tuya_state)
 
-        self.error_code = ERROR_MAPPING.get(
-            self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.ERROR]
-            ), None
-        )
-        _LOGGER.debug("error_code %s", self.error_code)
+        # Error code handling
+        error_code_raw = self.tuyastatus.get(self._tuya_command_codes.get(RobovacCommand.ERROR))
+        self.error_code = ERROR_MAPPING.get(error_code_raw, error_code_raw)
+        _LOGGER.debug("Error code: raw '%s' -> mapped '%s'", error_code_raw, self.error_code)
 
-        self._attr_mode = self.tuyastatus.get(
-            self._tuya_command_codes[RobovacCommand.MODE]
-        )
-        _LOGGER.debug("_attr_mode %s", self._attr_mode)
+        # Mode handling
+        mode_code = self._tuya_command_codes.get(RobovacCommand.MODE)
+        self._attr_mode = self.tuyastatus.get(mode_code)
+        _LOGGER.debug("Mode (code %s): %s", mode_code, self._attr_mode)
 
-        self._attr_fan_speed = friendly_text(
-            self.tuyastatus.get(self._tuya_command_codes[RobovacCommand.FAN_SPEED], "")
-        )
-        _LOGGER.debug("_attr_fan_speed %s", self._attr_fan_speed)
+        # Fan speed handling
+        fan_speed_code = self._tuya_command_codes.get(RobovacCommand.FAN_SPEED)
+        raw_fan_speed = self.tuyastatus.get(fan_speed_code, "")
+        self._attr_fan_speed = friendly_text(raw_fan_speed)
+        _LOGGER.debug("Fan speed (code %s, raw '%s'): %s", fan_speed_code, raw_fan_speed, self._attr_fan_speed)
 
+        # Cleaning area (if supported)
         if RobovacCommand.CLEANING_AREA in self._tuya_command_codes:
-            self._attr_cleaning_area = self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.CLEANING_AREA]
-            )
-            _LOGGER.debug("_attr_cleaning_area %s", self._attr_cleaning_area)
+            cleaning_area_code = self._tuya_command_codes[RobovacCommand.CLEANING_AREA]
+            self._attr_cleaning_area = self.tuyastatus.get(cleaning_area_code)
+            _LOGGER.debug("Cleaning area (code %s): %s", cleaning_area_code, self._attr_cleaning_area)
 
+        # Cleaning time (if supported)
         if RobovacCommand.CLEANING_TIME in self._tuya_command_codes:
-            self._attr_cleaning_time = self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.CLEANING_TIME]
-            )
-            _LOGGER.debug("_attr_cleaning_time %s", self._attr_cleaning_time)
+            cleaning_time_code = self._tuya_command_codes[RobovacCommand.CLEANING_TIME]
+            self._attr_cleaning_time = self.tuyastatus.get(cleaning_time_code)
+            _LOGGER.debug("Cleaning time (code %s): %s", cleaning_time_code, self._attr_cleaning_time)
 
+        # Auto return (if supported)
         if RobovacCommand.AUTO_RETURN in self._tuya_command_codes:
-            self._attr_auto_return = self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.AUTO_RETURN]
-            )
-            _LOGGER.debug("_attr_auto_return %s", self._attr_auto_return)
+            auto_return_code = self._tuya_command_codes[RobovacCommand.AUTO_RETURN]
+            self._attr_auto_return = self.tuyastatus.get(auto_return_code)
+            _LOGGER.debug("Auto return (code %s): %s", auto_return_code, self._attr_auto_return)
 
+        # Do not disturb (if supported)
         if RobovacCommand.DO_NOT_DISTURB in self._tuya_command_codes:
-            self._attr_do_not_disturb = self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.DO_NOT_DISTURB]
-            )
-            _LOGGER.debug("_attr_do_not_disturb %s", self._attr_do_not_disturb)
+            dnd_code = self._tuya_command_codes[RobovacCommand.DO_NOT_DISTURB]
+            self._attr_do_not_disturb = self.tuyastatus.get(dnd_code)
+            _LOGGER.debug("Do Not Disturb (code %s): %s", dnd_code, self._attr_do_not_disturb)
 
+        # Boost IQ (if supported)
         if RobovacCommand.BOOST_IQ in self._tuya_command_codes:
-            self._attr_boost_iq = self.tuyastatus.get(
-                self._tuya_command_codes[RobovacCommand.BOOST_IQ]
-            )
-            _LOGGER.debug("_attr_boost_iq %s", self._attr_boost_iq)
+            boost_iq_code = self._tuya_command_codes[RobovacCommand.BOOST_IQ]
+            self._attr_boost_iq = self.tuyastatus.get(boost_iq_code)
+            _LOGGER.debug("Boost IQ (code %s): %s", boost_iq_code, self._attr_boost_iq)
 
+        # Consumables (if supported)
         if RobovacCommand.CONSUMABLES in self._tuya_command_codes:
-            consumables = ast.literal_eval(
-                base64.b64decode(
-                    self.tuyastatus.get(
-                        self._tuya_command_codes[RobovacCommand.CONSUMABLES]
-                    )
-                ).decode("ascii")
-            )
-            _LOGGER.debug("Consumables decoded value is: {}".format(consumables))
-            if "consumable" in consumables and "duration" in consumables["consumable"]:
-                _LOGGER.debug(
-                    "Consumables encoded value is: {}".format(
-                        consumables["consumable"]["duration"]
-                    )
-                )
-                self._attr_consumables = consumables["consumable"]["duration"]
-            _LOGGER.debug("_attr_consumables %s", self._attr_consumables)
+            consumables_code = self._tuya_command_codes[RobovacCommand.CONSUMABLES]
+            try:
+                decoded = base64.b64decode(self.tuyastatus.get(consumables_code))
+                consumables = ast.literal_eval(decoded.decode("ascii"))
+                _LOGGER.debug("Decoded consumables: %s", consumables)
+                if "consumable" in consumables and "duration" in consumables["consumable"]:
+                    self._attr_consumables = consumables["consumable"]["duration"]
+                    _LOGGER.debug("Final consumables duration: %s", self._attr_consumables)
+            except Exception as e:
+                _LOGGER.error("Error decoding consumables: %s", e)
+
 
 
     async def async_locate(self, **kwargs):
@@ -538,23 +545,33 @@ class RoboVacEntity(StateVacuumEntity):
         asyncio.create_task(self.async_forced_update())
 
     async def async_return_to_base(self, **kwargs):
-        """Set the vacuum cleaner to return to the dock."""
-        _LOGGER.info("Return home Pressed")
-        await self.vacuum.async_set(
-            {self._tuya_command_codes[RobovacCommand.MODE]: "AggG"}
-        )
+        """Stop the vacuum cleaner and Return to Home"""
+        _LOGGER.info("Stop/Return Pressed")
+        code = self._tuya_command_codes[RobovacCommand.RETURN_HOME]
+        if self.tuyastatus.get(code):
+            await self.vacuum.async_set({code: False})
+        else:
+            await self.vacuum.async_set({code: True})
         asyncio.create_task(self.async_forced_update())
 
     async def async_start(self, **kwargs):
-        await self.vacuum.async_set(
-            {self._tuya_command_codes[RobovacCommand.MODE]: "BBoCCAE="}
-        )
+        """Start/Pause the vacuum cleaner."""
+        _LOGGER.info("START Pressed")
+        code = self._tuya_command_codes[RobovacCommand.START_PAUSE]
+        if self.tuyastatus.get(code):
+            await self.vacuum.async_set({code: False})
+        else:
+            await self.vacuum.async_set({code: True})
         asyncio.create_task(self.async_forced_update())
 
     async def async_pause(self, **kwargs):
-        await self.vacuum.async_set(
-            {self._tuya_command_codes[RobovacCommand.MODE]: "AggN"}
-        )
+        """Start/Pause the vacuum cleaner."""
+        _LOGGER.info("PAUSE Pressed")
+        code = self._tuya_command_codes[RobovacCommand.START_PAUSE]
+        if self.tuyastatus.get(code):
+            await self.vacuum.async_set({code: False})
+        else:
+            await self.vacuum.async_set({code: True})
         asyncio.create_task(self.async_forced_update())
 
     async def async_stop(self, **kwargs):
