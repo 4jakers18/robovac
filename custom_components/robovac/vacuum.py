@@ -555,17 +555,16 @@ class RoboVacEntity(StateVacuumEntity):
         asyncio.create_task(self.async_forced_update())
 
     async def async_start(self, **kwargs):
-        """Start/Pause the vacuum cleaner."""
+        """Start the vacuum cleaner."""
         _LOGGER.info("START Pressed")
-        code = self._tuya_command_codes[RobovacCommand.START_PAUSE]
-        if self.tuyastatus.get(code):
-            await self.vacuum.async_set({code: False})
-        else:
-            await self.vacuum.async_set({code: True})
+        await self.vacuum.async_set(
+            {self._tuya_command_codes[RobovacCommand.MODE]: "BBoCCAE="}
+        )
         asyncio.create_task(self.async_forced_update())
 
+
     async def async_pause(self, **kwargs):
-        """Start/Pause the vacuum cleaner."""
+        """Pause the vacuum cleaner."""
         _LOGGER.info("PAUSE Pressed")
         code = self._tuya_command_codes[RobovacCommand.START_PAUSE]
         if self.tuyastatus.get(code):
