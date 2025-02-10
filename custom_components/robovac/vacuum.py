@@ -114,6 +114,26 @@ TUYA_STATUS_MAPPING = { #153
     "AA==": "STANDBY",
     "AhAB": "SLEEPING",
 }
+# TUYA_STATUS_MAPPING["Charging"] = "CHARGING"
+# TUYA_STATUS_MAPPING["Recharge"] = "RECHARGE"
+# TUYA_STATUS_MAPPING["Nosweep"] = "NOSWEEP"
+# TUYA_STATUS_MAPPING["Sleeping"] = "SLEEPING"
+# TUYA_STATUS_MAPPING["Standby"] = "STANDBY"
+# TUYA_STATUS_MAPPING["Completed"] = "COMPLETED"
+# TUYA_STATUS_MAPPING["Going to charge"] = "GOING_TO_CHARGE"
+# TUYA_STATUS_MAPPING["Start manual"] = "START_MANUAL"
+# TUYA_STATUS_MAPPING["Spot"] = "SPOT"
+# TUYA_STATUS_MAPPING["Spot position"] = "SPOT_POSITION"
+# TUYA_STATUS_MAPPING["Spot pause"] = "SPOT_PAUSE"
+# TUYA_STATUS_MAPPING["Room"] = "ROOM"
+# TUYA_STATUS_MAPPING["Room position"] = "ROOM_POSITION"
+# TUYA_STATUS_MAPPING["Room pause"] = "ROOM_PAUSE"
+# TUYA_STATUS_MAPPING["Pause"] = "PAUSE"
+# TUYA_STATUS_MAPPING["Position"] = "POSITION"
+# TUYA_STATUS_MAPPING["Auto"] = "AUTO"
+
+
+
 
 STATUS_MAPPING = {
     "AUTO" : "Auto cleaning",
@@ -132,6 +152,25 @@ STATUS_MAPPING = {
     "STANDBY": "Standby",
     "SLEEPING": "Sleeping",
 }
+# STATUS_MAPPING["CHARGING"] = "Charging"
+# STATUS_MAPPING["RECHARGE"] = "Recharge"
+# STATUS_MAPPING["NOSWEEP"] = "Idle"             
+# STATUS_MAPPING["SLEEPING"] = "Sleeping"
+# STATUS_MAPPING["STANDBY"] = "Standby"
+# STATUS_MAPPING["COMPLETED"] = "Completed"
+# STATUS_MAPPING["GOING_TO_CHARGE"] = "Recharge"
+# STATUS_MAPPING["START_MANUAL"] = "Manual mode"
+# STATUS_MAPPING["SPOT"] = "Spot cleaning"
+# STATUS_MAPPING["SPOT_POSITION"] = "Positioning spot"
+# STATUS_MAPPING["SPOT_PAUSE"] = "Cleaning spot paused"
+# STATUS_MAPPING["ROOM"] = "Cleaning room"
+# STATUS_MAPPING["ROOM_POSITION"] = "Positioning room"
+# STATUS_MAPPING["ROOM_PAUSE"] = "Cleaning room paused"
+# STATUS_MAPPING["PAUSE"] = "Cleaning paused"
+# STATUS_MAPPING["POSITION"] = "Positioning"
+# STATUS_MAPPING["AUTO"] = "Auto cleaning"
+
+
 
 ERROR_MAPPING = { #177
     "DAiI6suO9dXszgFSAA==": "no_error",
@@ -408,13 +447,13 @@ class RoboVacEntity(StateVacuumEntity):
         )
         _LOGGER.debug("_attr_battery_level %s", self._attr_battery_level)
 
-        self.tuya_state = STATUS_MAPPING.get(
-            TUYA_STATUS_MAPPING.get(
-                self.tuyastatus.get(
-                    self._tuya_command_codes[RobovacCommand.STATUS]
-                ), None
-            ), None
-        )
+        raw_status = self.tuyastatus.get(self._tuya_command_codes[RobovacCommand.STATUS])
+        mapped_status = TUYA_STATUS_MAPPING.get(raw_status)
+        if mapped_status is None:
+            # Fallback: use the raw status (converted to uppercase, if desired)
+            mapped_status = raw_status.upper() if raw_status else None
+        self.tuya_state = STATUS_MAPPING.get(mapped_status, mapped_status)
+
         _LOGGER.debug("tuya_state %s", self.tuya_state)
 
         self.error_code = ERROR_MAPPING.get(
