@@ -750,7 +750,11 @@ class TuyaDevice:
 
         if self.writer is not None:
             self.writer.close()
-            await self.writer.wait_closed()
+            try:
+                await self.writer.wait_closed()
+            except Exception as ex:
+                self._LOGGER.debug("Error waiting for writer to close: {}".format(ex))
+
 
         if self.reader is not None and not self.reader.at_eof():
             self.reader.feed_eof()
@@ -796,7 +800,24 @@ class TuyaDevice:
         await asyncio.sleep(ping_interval)
         self._ping_task = asyncio.create_task(self.async_ping(self.ping_interval))
         if self.last_pong < self.last_ping:
+            retry_attempts = 3  # Number of retries before disconnecting
+            retry_interval = 2  # Time in seconds between retries
+
+            for attempt in range(retry_attempts):
+                self._LOGGER.debug(
+                    "Ping response missing, retrying... (Attempt {}/{})".format(attempt + 1, retry_attempts)
+                )
+                await asyncio.sleep(retry_interval)
+
+                if self.last_pong >= self.last_ping:
+                    self._LOGGER.debug("Pong received after retry, connection stable.")
+                    return  # Exit if pong is received within retries
+
+            # Disconnect if retries fail
+            self._LOGGER.debug("No pong received after retries, disconnecting.")
             await self.async_disconnect()
+
+
 
     async def _async_pong_received(self, message):
         self.last_pong = time.time()
