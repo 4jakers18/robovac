@@ -427,7 +427,12 @@ class RoboVacEntity(StateVacuumEntity):
             self.error_code = "IP_ADDRESS"
             return
 
-        await self.vacuum.async_get()
+        try:
+                await self.vacuum.async_get()
+        except Exception as e:
+            # Check if it’s a timeout-related error (or CancelledError) and log it without failing the update
+            _LOGGER.debug("Update timed out or was cancelled: %s", e)
+            # Optionally, do not mark this as a fatal error so the vacuum remains available.
         self.update_entity_values()
 
     async def async_forced_update(self):
